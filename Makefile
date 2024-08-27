@@ -42,5 +42,5 @@ start: build-front
 ## stop: stop the front end
 stop:
 	@echo "Stopping front end..."
-	@-pkill -SIGTERM -f "./${FRONT_END_BINARY}"
+	@-pkill -SIGTERM -f "./${FRONT_END_BINARY}" &
 	@echo "Stopped front end!"
