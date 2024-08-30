@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 )
 
@@ -12,9 +14,20 @@ func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
 		Password string `json:"password"`
 	}
 
-	err := app.readJson(w, r, &requestPayload)
+	// err := app.readJson(w, r, &requestPayload)
+	// if err != nil {
+	// 	_ = app.errorJson(w, err, http.StatusBadRequest)
+	// 	return
+	// }
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		_ = app.errorJson(w, err, http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	if err := json.Unmarshal(body, &requestPayload); err != nil {
+		_ = app.errorJson(w, err, http.StatusUnprocessableEntity)
 		return
 	}
 

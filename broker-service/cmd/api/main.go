@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-var webPort = "8080"
+var webPort = "80"
 
 type Config struct{}
 
