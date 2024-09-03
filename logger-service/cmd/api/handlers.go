@@ -31,5 +31,5 @@ func (app *Config) WriteLog(w http.ResponseWriter, r *http.Request) {
 		Message: "logged",
 	}
 
-	app.writeJson(w, http.StatusAccepted, resp)
+	_ = app.writeJson(w, http.StatusAccepted, resp)
 }

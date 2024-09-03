@@ -1,10 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 )
 
@@ -14,20 +14,9 @@ func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
 		Password string `json:"password"`
 	}
 
-	// err := app.readJson(w, r, &requestPayload)
-	// if err != nil {
-	// 	_ = app.errorJson(w, err, http.StatusBadRequest)
-	// 	return
-	// }
-	body, err := io.ReadAll(r.Body)
+	err := app.readJson(w, r, &requestPayload)
 	if err != nil {
 		_ = app.errorJson(w, err, http.StatusBadRequest)
-		return
-	}
-	defer r.Body.Close()
-
-	if err := json.Unmarshal(body, &requestPayload); err != nil {
-		_ = app.errorJson(w, err, http.StatusUnprocessableEntity)
 		return
 	}
 
@@ -43,11 +32,42 @@ func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = app.logRequest("authentication", fmt.Sprintf("%s logged in", user.Email))
+	if err != nil {
+		_ = app.errorJson(w, err)
+		return
+	}
+
 	payload := jsonResponse{
 		Error:   false,
 		Message: fmt.Sprintf("Logged in user %s\n", user.Email),
 		Data:    user,
 	}
 
-	app.writeJson(w, http.StatusAccepted, payload)
+	_ = app.writeJson(w, http.StatusAccepted, payload)
+}
+
+func (app *Config) logRequest(name, data string) error {
+	var entry struct {
+		Name string `json:"name"`
+		Data string `json:"data"`
+	}
+
+	entry.Name = name
+	entry.Data = data
+
+	jsonData, _ := json.MarshalIndent(entry, "", "\t")
+	logServiceURL := "http://logger-service/log"
+
+	request, err := http.NewRequest(http.MethodPost, logServiceURL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return err
+	}
+
+	client := &http.Client{}
+	if _, err = client.Do(request); err != nil {
+		return err
+	}
+
+	return nil
 }
